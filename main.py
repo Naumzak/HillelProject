@@ -1,6 +1,7 @@
 import cherrypy
 import sqlite3
 import os
+import json
 
 
 def db_request(query):
@@ -60,8 +61,7 @@ class Band(object):
     def index(self):
         query = f"""SELECT DISTINCT s.song_name, s.song_text, s.origin_lang, s.song_year  FROM song as s"""
         result = db_request(query)
-        return str(result)
-
+        return json.dumps(result)
 
 
 class Artist(object):
@@ -73,7 +73,7 @@ class Artist(object):
                     JOIN artist as ar ON ar.artist_id = ias.artist_id
                     WHERE ar.artist_name = '{artist.title()}'"""
         result = db_request(query)
-        return str(result)
+        return json.dumps(result)
 
 
 class Album(object):
@@ -86,7 +86,7 @@ JOIN album as al ON al.album_id = ias.album_id
 JOIN artist as ar ON ar.artist_id = ias.artist_id
 WHERE ar.artist_name = '{artist.title()}' and al.album_name = '{' '.join(title.split('_')).title()}' """
         result = db_request(query)
-        return str(result)
+        return json.dumps(result)
 
 
 class Song(object):
@@ -99,7 +99,7 @@ class Song(object):
         JOIN artist as ar ON ar.artist_id = ias.artist_id
         WHERE ar.artist_name = '{artist.title()}' and s.song_name = '{' '.join(song.split('_')).title()}' """
         result = db_request(query)
-        return str(result)
+        return json.dumps(result)
 
 
 class Search(object):
