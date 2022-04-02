@@ -2,6 +2,7 @@ import cherrypy
 import sqlite3
 import os
 import json
+from translate import translate_func  # импорт файла с api для перевода
 
 
 def db_request(query):
@@ -91,7 +92,7 @@ WHERE ar.artist_name = '{artist.title()}' and al.album_name = '{' '.join(title.s
 
 class Song(object):
     @cherrypy.expose
-    def index(self, artist, song, title=''):
+    def index(self, artist, song, target='ru', title=''):
         query = f"""
                             SELECT DISTINCT s.song_name, s.song_text, s.origin_lang, s.song_year  FROM song as s
         JOIN info_about_song AS ias ON ias.song_id = s.song_id
@@ -99,13 +100,19 @@ class Song(object):
         JOIN artist as ar ON ar.artist_id = ias.artist_id
         WHERE ar.artist_name = '{artist.title()}' and s.song_name = '{' '.join(song.split('_')).title()}' """
         result = db_request(query)
-        return json.dumps(result)
+        return json.dumps(result), \
+               json.dumps('{' + translate_func(result[0]['song_text'], result[0]['origin_lang'], target)[27:-3],
+                          ensure_ascii=False)
 
 
 class Search(object):
     @cherrypy.expose
-    def index(self):
-        pass
+    def index(self, search_word):
+        result = {'song': db_request(f""" SELECT song_name FROM song WHERE song_name like '%{search_word}%' """),
+                  'album': db_request(f""" SELECT album_name FROM album WHERE album_name like '%{search_word}%'"""),
+                  'artist': db_request(f""" SELECT artist_name FROM artist WHERE artist_name like '%{search_word}%'""")
+                  }
+        return json.dumps(result)
 
 
 if __name__ == '__main__':
